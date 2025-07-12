@@ -1,25 +1,77 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Simulateur de transmissions – Chaîne, Courroie & Engrenages</title>
-<style>
-  :root { --bg:#f6f8fa; --surface:#ffffff; --primary:#2563eb; }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);display:grid;place-items:center;height:100vh}
-  #app{width:95%;max-width:1200px;background:var(--surface);border-radius:1rem;box-shadow:0 10px 25px rgba(0,0,0,.1);overflow:hidden;display:grid;grid-template-rows:auto 1fr}
-  header{background:var(--primary);color:#fff;padding:1rem 2rem;display:flex;align-items:center;gap:2rem}
-  header h1{font-size:1.25rem;margin:0}
-  header nav a{color:inherit;text-decoration:none;padding:.5rem 1rem;border-radius:.5rem;transition:background .2s}
-  header nav a.active,header nav a:hover{background:rgba(255,255,255,.2)}
-  main{display:none;padding:1rem 2rem 2rem;height:100%;overflow:auto}
-  main.active{display:block}
-  .controls{margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:1rem}
-  label{display:flex;flex-direction:column;font-size:.9rem}
-  input[type="number"],select{padding:.3rem .4rem;font-size:1rem;border:1px solid #d1d5db;border-radius:.4rem;width:6rem}
-  canvas{background:#fff;border:1px solid #e5e7eb;border-radius:.75rem}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulateur de transmissions – Chaîne, Courroie & Engrenages</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --primary: #2563eb;
+      --gear: #f59e0b;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      display: grid;
+      place-items: center;
+      height: 100vh;
+    }
+    #app {
+      width: 95%;
+      max-width: 1200px;
+      background: var(--surface);
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,.1);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+    header h1 { font-size: 1.25rem; margin: 0; }
+    header nav a {
+      color: inherit;
+      text-decoration: none;
+      padding: .5rem 1rem;
+      border-radius: .5rem;
+      transition: background .2s;
+    }
+    header nav a.active,
+    header nav a:hover { background: rgba(255,255,255,.2); }
+    main { display: none; padding: 1rem 2rem 2rem; height: 100%; overflow: auto; }
+    main.active { display: block; }
+    .controls {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      font-size: .9rem;
+    }
+    input[type="number"], select {
+      padding: .3rem .4rem;
+      font-size: 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: .4rem;
+      min-width: 10rem;
+    }
+    canvas { background: #fff; border: 1px solid #e5e7eb; border-radius: .75rem; }
+  </style>
 </head>
 <body>
 <div id="app">
@@ -38,7 +90,10 @@
       <label>Pignon moteur (A) dents <input type="number" id="chain-teeth-a" value="20" min="5"></label>
       <label>Pignon récepteur (B) dents <input type="number" id="chain-teeth-b" value="40" min="5"></label>
       <label>Configuration
-        <select id="chain-type"><option value="straight">Chaîne droite</option><option value="crossed">Chaîne croisée</option></select>
+        <select id="chain-type">
+          <option value="straight">Chaîne droite</option>
+          <option value="crossed">Chaîne croisée</option>
+        </select>
       </label>
       <button id="chain-start">Démarrer</button>
       <div id="chain-ratio-display"></div>
@@ -51,7 +106,12 @@
     <section class="controls">
       <label>Poulie moteur (A) Ø (mm)<input type="number" id="belt-dia-a" value="50" min="10"></label>
       <label>Poulie réceptrice (B) Ø (mm)<input type="number" id="belt-dia-b" value="100" min="10"></label>
-      <label>Configuration <select id="belt-type"><option value="straight">Courroie droite</option><option value="crossed">Courroie croisée</option></select></label>
+      <label>Configuration 
+        <select id="belt-type">
+          <option value="straight">Courroie droite</option>
+          <option value="crossed">Courroie croisée</option>
+        </select>
+      </label>
       <button id="belt-start">Démarrer</button>
       <div id="belt-ratio-display"></div>
     </section>
@@ -61,7 +121,8 @@
   <!-- Engrenages -->
   <main id="gear">
     <section class="controls">
-      <label>Ajouter un engrenage (dents)<input type="number" id="gear-add-count" value="20" min="5"></label>
+      <label>Engrenage moteur (1er) dents <input type="number" id="gear-0-count" value="50" min="5"></label>
+      <label>Ajouter un engrenage (dents) <input type="number" id="gear-add-count" value="20" min="5"></label>
       <button id="gear-add">Ajouter</button>
       <button id="gear-remove">Enlever dernier</button>
       <button id="gear-start">Démarrer</button>
@@ -73,41 +134,222 @@
 
 <script>
 const TAU=Math.PI*2, rad=a=>a*Math.PI/180;
-function drawCog(ctx,r,toothDepth,teeth,angleOffset=0,fill="#eee",stroke="#000"){const inner=r-toothDepth,step=TAU/teeth;ctx.fillStyle=fill;ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.beginPath();for(let i=0;i<teeth;i++){const a0=angleOffset+i*step,a1=a0+step/2,a2=a0+step;ctx.lineTo(Math.cos(a0)*inner,Math.sin(a0)*inner);ctx.lineTo(Math.cos(a1)*r,Math.sin(a1)*r);ctx.lineTo(Math.cos(a2)*inner,Math.sin(a2)*inner);}ctx.closePath();ctx.fill();ctx.stroke();}
-document.querySelectorAll('header nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.querySelectorAll('header nav a').forEach(l=>l.classList.remove('active'));a.classList.add('active');document.querySelectorAll('main').forEach(m=>m.classList.remove('active'));document.getElementById(a.dataset.target).classList.add('active');}));
-class ChainSim{constructor(){this.c=document.getElementById('chain-canvas');this.ctx=this.c.getContext('2d');this.running=false;this.last=0;this.offset=0;document.getElementById('chain-start').onclick=()=>{this.running=!this.running;if(this.running){this.omegaA=0;this.last=performance.now();requestAnimationFrame(t=>this.loop(t));}};}
-  params(){return{zA:+document.getElementById('chain-teeth-a').value,zB:+document.getElementById('chain-teeth-b').value,type:document.getElementById('chain-type').value};}
-  loop(ts){const dt=(ts-this.last)/1000;this.last=ts;this.update(dt);this.draw();if(this.running)requestAnimationFrame(t=>this.loop(t));}
-  update(dt){const{zA,zB}=this.params();this.omegaA+=rad(120)*dt;this.omegaB=this.omegaA*zA/zB*(this.params().type==='crossed'?-1:1);this.offset+=100*dt;}
-  draw(){const{ctx,c}=this;ctx.clearRect(0,0,c.width,c.height);const{zA,zB,type}=this.params(),rA=30,rB=rA*zB/zA,xA=150,xB=c.width-150,y=c.height/2;
+function drawCog(ctx,r,toothDepth,teeth,angleOffset=0,fill="#eee",stroke="#000"){
+  const inner=r-toothDepth,step=TAU/teeth;
+  ctx.fillStyle=fill;ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.beginPath();
+  for(let i=0;i<teeth;i++){
+    const a0=angleOffset+i*step,a1=a0+step/2,a2=a0+step;
+    ctx.lineTo(Math.cos(a0)*inner,Math.sin(a0)*inner);
+    ctx.lineTo(Math.cos(a1)*r,Math.sin(a1)*r);
+    ctx.lineTo(Math.cos(a2)*inner,Math.sin(a2)*inner);
+  }
+  ctx.closePath();ctx.fill();ctx.stroke();
+}
+document.querySelectorAll('header nav a').forEach(a=>a.addEventListener('click',e=>{
+  e.preventDefault();
+  document.querySelectorAll('header nav a').forEach(l=>l.classList.remove('active'));
+  a.classList.add('active');
+  document.querySelectorAll('main').forEach(m=>m.classList.remove('active'));
+  document.getElementById(a.dataset.target).classList.add('active');
+}));
+
+class ChainSim {
+  constructor(){
+    this.c=document.getElementById('chain-canvas');
+    this.ctx=this.c.getContext('2d');
+    this.running=false;this.last=0;this.offset=0;
+    document.getElementById('chain-start').onclick=()=>{
+      this.running=!this.running;
+      if(this.running){this.omegaA=0;this.last=performance.now();requestAnimationFrame(t=>this.loop(t));}
+    };
+  }
+  params(){
+    return {
+      zA:+document.getElementById('chain-teeth-a').value,
+      zB:+document.getElementById('chain-teeth-b').value,
+      type:document.getElementById('chain-type').value
+    };
+  }
+  loop(ts){
+    const dt=(ts-this.last)/1000;
+    this.last=ts;
+    this.update(dt);
+    this.draw();
+    if(this.running)requestAnimationFrame(t=>this.loop(t));
+  }
+  update(dt){
+    const {zA,zB} = this.params();
+    this.omegaA+=rad(120)*dt;
+    this.omegaB=this.omegaA*zA/zB*(this.params().type==='crossed'?-1:1);
+    this.offset+=100*dt;
+  }
+  draw(){
+    const {ctx,c}=this;
+    ctx.clearRect(0,0,c.width,c.height);
+    const {zA,zB,type}=this.params(),rA=30,rB=rA*zB/zA,xA=150,xB=c.width-150,y=c.height/2;
     ctx.strokeStyle="#555";ctx.lineWidth=6;ctx.setLineDash([10,10]);ctx.lineDashOffset=-this.offset;
-    ctx.beginPath();if(type==='straight'){ctx.moveTo(xA,y-rA);ctx.lineTo(xB,y-rB);ctx.arc(xB,y,rB,-Math.PI/2,Math.PI/2);ctx.lineTo(xA,y+rA);ctx.arc(xA,y,rA,Math.PI/2,-Math.PI/2);}else{ctx.moveTo(xA,y-rA);ctx.lineTo(xB,y+rB);ctx.arc(xB,y,rB,Math.PI/2,-Math.PI/2,true);ctx.lineTo(xA,y+rA);ctx.arc(xA,y,rA,Math.PI/2,-Math.PI/2);}ctx.closePath();ctx.stroke();ctx.setLineDash([]);
-    this.drawSprocket(xA,y,rA,zA,this.omegaA);this.drawSprocket(xB,y,rB,zB,this.omegaB);
-    document.getElementById('chain-ratio-display').textContent=`Rapport i = ${(zB/zA).toFixed(2)}`;}
-  drawSprocket(x,y,r,teeth,angle){const{ctx}=this;ctx.save();ctx.translate(x,y);ctx.rotate(angle);drawCog(ctx,r,r*0.25,teeth,0,"#c7d2fe","#1e3a8a");ctx.strokeStyle="#1e3a8a";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r-5,0);ctx.stroke();ctx.restore();}}
+    ctx.beginPath();
+    if(type==='straight'){
+      ctx.moveTo(xA,y-rA);ctx.lineTo(xB,y-rB);ctx.arc(xB,y,rB,-Math.PI/2,Math.PI/2);
+      ctx.lineTo(xA,y+rA);ctx.arc(xA,y,rA,Math.PI/2,-Math.PI/2);
+    }else{
+      ctx.moveTo(xA,y-rA);ctx.lineTo(xB,y+rB);ctx.arc(xB,y,rB,Math.PI/2,-Math.PI/2,true);
+      ctx.lineTo(xA,y+rA);ctx.arc(xA,y,rA,Math.PI/2,-Math.PI/2);
+    }
+    ctx.closePath();ctx.stroke();ctx.setLineDash([]);
+    this.drawSprocket(xA,y,rA,zA,this.omegaA);
+    this.drawSprocket(xB,y,rB,zB,this.omegaB);
+    document.getElementById('chain-ratio-display').textContent=`Rapport i = ${(zB/zA).toFixed(2)}`;
+  }
+  drawSprocket(x,y,r,teeth,angle){
+    const {ctx}=this;
+    ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+    drawCog(ctx,r,r*0.25,teeth,0,"#c7d2fe","#1e3a8a");
+    ctx.strokeStyle="#1e3a8a";ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r-5,0);ctx.stroke();
+    ctx.restore();
+  }
+}
 
-class BeltSim{constructor(){this.c=document.getElementById('belt-canvas');this.ctx=this.c.getContext('2d');this.running=false;this.last=0;this.offset=0;document.getElementById('belt-start').onclick=()=>{this.running=!this.running;if(this.running){this.thetaA=0;this.last=performance.now();requestAnimationFrame(t=>this.loop(t));}};}
-  params(){return{dA:+document.getElementById('belt-dia-a').value,dB:+document.getElementById('belt-dia-b').value,type:document.getElementById('belt-type').value};}
-  loop(ts){const dt=(ts-this.last)/1000;this.last=ts;this.update(dt);this.draw();if(this.running)requestAnimationFrame(t=>this.loop(t));}
-  update(dt){const{dA,dB}=this.params();this.thetaA+=rad(90)*dt;this.thetaB=this.thetaA*dA/dB*(this.params().type==='crossed'?-1:1);this.offset+=100*dt;}
-  draw(){const{ctx,c}=this;ctx.clearRect(0,0,c.width,c.height);const{dA,dB,type}=this.params(),rA=dA/2,rB=dB/2,xA=150,xB=c.width-150,y=c.height/2;
+class BeltSim {
+  constructor(){
+    this.c=document.getElementById('belt-canvas');
+    this.ctx=this.c.getContext('2d');
+    this.running=false;this.last=0;this.offset=0;
+    document.getElementById('belt-start').onclick=()=>{
+      this.running=!this.running;
+      if(this.running){this.thetaA=0;this.last=performance.now();requestAnimationFrame(t=>this.loop(t));}
+    };
+  }
+  params(){
+    return {
+      dA:+document.getElementById('belt-dia-a').value,
+      dB:+document.getElementById('belt-dia-b').value,
+      type:document.getElementById('belt-type').value
+    };
+  }
+  loop(ts){
+    const dt=(ts-this.last)/1000;
+    this.last=ts;
+    this.update(dt);
+    this.draw();
+    if(this.running)requestAnimationFrame(t=>this.loop(t));
+  }
+  update(dt){
+    const {dA,dB} = this.params();
+    this.thetaA+=rad(90)*dt;
+    this.thetaB=this.thetaA*dA/dB*(this.params().type==='crossed'?-1:1);
+    this.offset+=100*dt;
+  }
+  draw(){
+    const {ctx,c}=this;
+    ctx.clearRect(0,0,c.width,c.height);
+    const {dA,dB,type}=this.params(),rA=dA/2,rB=dB/2,xA=150,xB=c.width-150,y=c.height/2;
     ctx.strokeStyle="#222";ctx.lineWidth=4;ctx.setLineDash([12,12]);ctx.lineDashOffset=-this.offset;
-    ctx.beginPath();if(type==='straight'){ctx.moveTo(xA,y-rA);ctx.lineTo(xB,y-rB);ctx.arc(xB,y,rB,-Math.PI/2,Math.PI/2);ctx.lineTo(xA,y+rA);ctx.arc(xA,y,rA,Math.PI/2,-Math.PI/2);}else{ctx.moveTo(xA,y-rA);ctx.lineTo(xB,y+rB);ctx.arc(xB,y,rB,Math.PI/2,-Math.PI/2,true);ctx.lineTo(xA,y+rA);ctx.arc(xA,y,rA,Math.PI/2,-Math.PI/2);}ctx.closePath();ctx.stroke();ctx.setLineDash([]);
-    this.drawPulley(xA,y,rA,this.thetaA);this.drawPulley(xB,y,rB,this.thetaB);
-    document.getElementById('belt-ratio-display').textContent=`Rapport i = ${(dB/dA).toFixed(2)}`;}
-  drawPulley(x,y,r,angle){const{ctx}=this;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.fillStyle="#fee2e2";ctx.beginPath();ctx.arc(0,0,r,0,TAU);ctx.fill();ctx.strokeStyle="#b91c1c";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r-4,0);ctx.stroke();ctx.restore();}}
+    ctx.beginPath();
+    if(type==='straight'){
+      ctx.moveTo(xA,y-rA);ctx.lineTo(xB,y-rB);ctx.arc(xB,y,rB,-Math.PI/2,Math.PI/2);
+      ctx.lineTo(xA,y+rA);ctx.arc(xA,y,rA,Math.PI/2,-Math.PI/2);
+    }else{
+      ctx.moveTo(xA,y-rA);ctx.lineTo(xB,y+rB);ctx.arc(xB,y,rB,Math.PI/2,-Math.PI/2,true);
+      ctx.lineTo(xA,y+rA);ctx.arc(xA,y,rA,Math.PI/2,-Math.PI/2);
+    }
+    ctx.closePath();ctx.stroke();ctx.setLineDash([]);
+    this.drawPulley(xA,y,rA,this.thetaA);
+    this.drawPulley(xB,y,rB,this.thetaB);
+    document.getElementById('belt-ratio-display').textContent=`Rapport i = ${(dB/dA).toFixed(2)}`;
+  }
+  drawPulley(x,y,r,angle){
+    const {ctx}=this;
+    ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+    ctx.fillStyle="#fee2e2";ctx.beginPath();ctx.arc(0,0,r,0,TAU);ctx.fill();
+    ctx.strokeStyle="#b91c1c";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r-4,0);ctx.stroke();
+    ctx.restore();
+  }
+}
 
-class GearSim{constructor(){this.c=document.getElementById('gear-canvas');this.ctx=this.c.getContext('2d');this.running=false;this.last=0;this.gears=[20];this.initControls();}
-  initControls(){document.getElementById('gear-add').onclick=()=>{const z=+document.getElementById('gear-add-count').value;if(z>4)this.gears.push(z);this.draw();};document.getElementById('gear-remove').onclick=()=>{if(this.gears.length>1)this.gears.pop();this.draw();};document.getElementById('gear-start').onclick=()=>{this.running=!this.running;if(this.running){this.angles=this.gears.map(()=>0);this.last=performance.now();requestAnimationFrame(t=>this.loop(t));}};}
-  loop(ts){const dt=(ts-this.last)/1000;this.last=ts;this.update(dt);this.draw();if(this.running)requestAnimationFrame(t=>this.loop(t));}
-  update(dt){this.angles[0]+=rad(60)*dt;for(let i=1;i<this.gears.length;i++){this.angles[i]=this.angles[i-1]*this.gears[i-1]/this.gears[i]*-1;}}
-  draw(){const{ctx,c}=this;ctx.clearRect(0,0,c.width,c.height);const y=c.height/2;const scale=0.6;let centers=[];let xCursor=100+this.gears[0]*scale;
-    for(let i=0;i<this.gears.length;i++){const r=this.gears[i]*scale;if(i===0){centers.push(xCursor);}else{const prevR=this.gears[i-1]*scale;centers.push(centers[i-1]+prevR+r);} }
-    centers.forEach((cx,i)=>{const r=this.gears[i]*scale;this.drawGear(cx,y,r,this.gears[i],this.angles[i],i===0,i===this.gears.length-1);});
+class GearSim {
+  constructor(){
+    this.c=document.getElementById('gear-canvas');
+    this.ctx=this.c.getContext('2d');
+    this.running=false;
+    this.last=0;
+    this.gears=[50];
+    this.initControls();
+  }
+  initControls(){
+    document.getElementById('gear-add').onclick=()=>{
+      const z=+document.getElementById('gear-add-count').value;
+      if(z>4)this.gears.push(z);
+      this.draw();
+    };
+    document.getElementById('gear-remove').onclick=()=>{
+      if(this.gears.length>1)this.gears.pop();
+      this.draw();
+    };
+    document.getElementById('gear-start').onclick=()=>{
+      this.running=!this.running;
+      if(this.running){
+        this.angles=this.gears.map(()=>0);
+        this.last=performance.now();
+        requestAnimationFrame(t=>this.loop(t));
+      }
+    };
+    document.getElementById('gear-0-count').addEventListener('input',()=>{
+      const z = +document.getElementById('gear-0-count').value;
+      if (z >= 5) this.gears[0] = z;
+      this.draw();
+    });
+  }
+  loop(ts){
+    const dt=(ts-this.last)/1000;
+    this.last=ts;
+    this.update(dt);
+    this.draw();
+    if(this.running)requestAnimationFrame(t=>this.loop(t));
+  }
+  update(dt){
+    this.angles[0]+=rad(60)*dt;
+    for(let i=1;i<this.gears.length;i++){
+      this.angles[i]=this.angles[i-1]*this.gears[i-1]/this.gears[i]*-1;
+    }
+  }
+  draw(){
+    const {ctx,c}=this;
+    ctx.clearRect(0,0,c.width,c.height);
+    const y=c.height/2,scale=0.6;
+    let centers=[],xCursor=100+this.gears[0]*scale;
+    for(let i=0;i<this.gears.length;i++){
+      const r=this.gears[i]*scale;
+      if(i===0){ centers.push(xCursor); }
+      else{
+        const prevR=this.gears[i-1]*scale;
+        centers.push(centers[i-1]+prevR+r);
+      }
+    }
+    centers.forEach((cx,i)=>{
+      const r=this.gears[i]*scale;
+      this.drawGear(cx,y,r,this.gears[i],this.angles[i],i===0,i===this.gears.length-1);
+    });
     const ratio=this.gears.length>1?(this.gears[this.gears.length-1]/this.gears[0])*(this.gears.length%2===0?-1:1):1;
-    document.getElementById('gear-ratio-display').textContent=`Rapport i = ${ratio.toFixed(2)} ${this.gears.length>1?(ratio<0?'(Inversion de sens)':'(Même sens)'):''}`;}
-  drawGear(x,y,r,z,angle,isMotor,isOutput){const{ctx}=this;ctx.save();ctx.translate(x,y);ctx.rotate(angle);const fill=isMotor?"#bbf7d0":isOutput?"#fde68a":"#e0e7ff";drawCog(ctx,r,r*0.2,z,0,fill,"#111827");ctx.strokeStyle="#111827";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r-5,0);ctx.stroke();ctx.restore();}}
-window.addEventListener('load',()=>{new ChainSim();new BeltSim();new GearSim();});
+    document.getElementById('gear-ratio-display').textContent=`Rapport i = ${ratio.toFixed(2)} ${this.gears.length>1?(ratio<0?'(Inversion de sens)':'(Même sens)'):''}`;
+  }
+  drawGear(x,y,r,z,angle,isMotor,isOutput){
+    const {ctx}=this;
+    ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+    const fill=isMotor?"#bbf7d0":isOutput?"#fde68a":"#e0e7ff";
+    drawCog(ctx,r,r*0.2,z,0,fill,"#111827");
+    ctx.strokeStyle="#111827";ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r-5,0);ctx.stroke();
+    ctx.restore();
+  }
+}
+
+window.addEventListener('load',()=>{
+  new ChainSim();
+  new BeltSim();
+  new GearSim();
+});
 </script>
 </body>
 </html>
